@@ -48,9 +48,24 @@ add_action( 'elementor/widgets/register', function ( $widgets_manager ) {
 
 	$class = '\EntireRCM\AtomicWidgets\Atomic_Form';
 
-	if ( class_exists( $class ) && ! $widgets_manager->is_registered( $class::get_element_type() ) ) {
-		$widgets_manager->register( new $class() );
+	if ( ! class_exists( $class ) ) {
+		return;
 	}
+
+	/*
+	 * `Widgets_Manager` has no `is_registered()` — calling it fatals Elementor on
+	 * every boot, which takes the editor and the MCP down with it. This action can
+	 * also fire more than once, so guard double registration with our own flag.
+	 */
+	static $registered = false;
+
+	if ( $registered ) {
+		return;
+	}
+
+	$registered = true;
+
+	$widgets_manager->register( new $class() );
 }, 20 );
 
 /**
